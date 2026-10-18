@@ -1,3 +1,5 @@
+"use client";
+
 import { UserRole } from "@/lib/generated/prisma/enums";
 import Image from "next/image";
 import Link from "next/link";

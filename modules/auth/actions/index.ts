@@ -55,7 +55,10 @@ export const onBoardUser = async () => {
       success: true,
       user: newUser,
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest) {
+      throw error;
+    }
     console.error("Error onboarding user:", error);
 
     return {
@@ -82,7 +85,10 @@ export const currentUserRole = async () => {
       },
     });
     return userRole?.role ?? null;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest) {
+      throw error;
+    }
     console.error("Error fetching user role:", error);
     return null;
   }
@@ -118,7 +124,10 @@ export const getCurrentUserData = async () => {
       },
     });
     return data;
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest) {
+      throw error;
+    }
     console.error("Error fetching current user data:", error);
     return null;
   }

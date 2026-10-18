@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { currentUserRole } from '@/modules/auth/actions'
 import { Navbar } from '@/modules/home/components/navbar'
+import { NavbarSkeleton } from '@/modules/home/components/navbar-skeleton'
 import React from 'react'
 
 async function DynamicNavbar() {
@@ -11,7 +12,7 @@ async function DynamicNavbar() {
 const RootLayout = ({children}:{children:React.ReactNode}) => {
   return (
     <main className='flex flex-col min-h-screen'>
-      <Suspense fallback={<Navbar userRole={null} />}>
+      <Suspense fallback={<NavbarSkeleton />}>
         <DynamicNavbar />
       </Suspense>
 

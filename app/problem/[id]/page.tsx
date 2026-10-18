@@ -12,7 +12,7 @@ import TestCasesPanel from "@/modules/problems/components/testcases-panel";
 import { ExecutionResults } from "@/modules/problems/components/execution-results";
 import { useSubmissionHistory } from "@/modules/problems/hooks/use-submission-history";
 
-const ProblemIdPage = () => {
+const ProblemIdContent = () => {
   const params = useParams<{ id: string }>();
 
   const { problem, isLoading } = useProblem(params.id);
@@ -79,4 +79,16 @@ const ProblemIdPage = () => {
   );
 };
 
-export default ProblemIdPage;
+export default function ProblemIdPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center h-screen">
+          <Spinner />
+        </div>
+      }
+    >
+      <ProblemIdContent />
+    </React.Suspense>
+  );
+}

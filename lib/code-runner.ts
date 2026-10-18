@@ -124,7 +124,8 @@ async function runWithWandbox(
   language: string,
   code: string,
   stdin: string,
-  timeoutMs = 35000
+  timeoutMs = 35000,
+  maxRetries = 2
 ): Promise<{ stdout: string; stderr: string; compileOutput: string; exitCode: number; time: string }> {
   const normalized = normalizeLanguage(language);
   const compiler = WANDBOX_COMPILERS[normalized] || WANDBOX_COMPILERS.PYTHON;
@@ -133,37 +134,51 @@ async function runWithWandbox(
   // Guarantee standard input terminates with a newline so line readers (e.g. Scanner.nextLine) don't hang
   const formattedStdin = stdin !== undefined && stdin !== null ? (stdin.endsWith("\n") ? stdin : stdin + "\n") : "\n";
 
-  const startTime = Date.now();
-  const response = await axios.post(
-    "https://wandbox.org/api/compile.json",
-    {
-      compiler,
-      code: sanitized,
-      stdin: formattedStdin,
-    },
-    {
-      timeout: timeoutMs,
-      headers: {
-        "Content-Type": "application/json",
-      },
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const startTime = Date.now();
+      const response = await axios.post(
+        "https://wandbox.org/api/compile.json",
+        {
+          compiler,
+          code: sanitized,
+          stdin: formattedStdin,
+        },
+        {
+          timeout: timeoutMs,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const durationSec = ((Date.now() - startTime) / 1000).toFixed(3);
+      const data = response.data || {};
+
+      const stdout = (data.program_output || "").trim();
+      const stderr = (data.program_error || "").trim();
+      const compileOutput = (data.compiler_error || data.compiler_message || "").trim();
+      const exitCode = parseInt(data.status || "0", 10);
+
+      return {
+        stdout,
+        stderr,
+        compileOutput,
+        exitCode,
+        time: `${durationSec} s`,
+      };
+    } catch (err: any) {
+      if (err?.response?.status === 429 && attempt < maxRetries) {
+        const backoffMs = (attempt + 1) * 1500;
+        console.warn(`Wandbox 429 hit. Waiting ${backoffMs}ms before retrying (attempt ${attempt + 1}/${maxRetries})...`);
+        await new Promise((resolve) => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      throw err;
     }
-  );
+  }
 
-  const durationSec = ((Date.now() - startTime) / 1000).toFixed(3);
-  const data = response.data || {};
-
-  const stdout = (data.program_output || "").trim();
-  const stderr = (data.program_error || "").trim();
-  const compileOutput = (data.compiler_error || data.compiler_message || "").trim();
-  const exitCode = parseInt(data.status || "0", 10);
-
-  return {
-    stdout,
-    stderr,
-    compileOutput,
-    exitCode,
-    time: `${durationSec} s`,
-  };
+  throw new Error("Wandbox execution exceeded maximum retry attempts.");
 }
 
 /**
@@ -221,6 +236,9 @@ export async function executeTestCases(
   const results: TestCaseExecutionResult[] = [];
 
   for (let index = 0; index < testCases.length; index++) {
+    if (index > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
     const tc = testCases[index];
     try {
       const raw = customPiston
