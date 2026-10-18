@@ -1,8 +1,7 @@
-
 import { auth } from "@clerk/nextjs/server";
-import { connection } from "next/server";
 import { onBoardUser } from "@/modules/auth/actions";
 import { Suspense } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   ChevronRight,
@@ -22,14 +21,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-async function AuthenticatedHome() {
-  await connection();
-
-  const { userId } = await auth();
-
-  if (userId) {
-    await onBoardUser();
+async function UserOnboarding() {
+  try {
+    const { userId } = await auth();
+    if (userId) {
+      await onBoardUser();
+    }
+  } catch {
+    // Graceful handling during prerender
   }
+  return null;
+}
+
+function HomeContent() {
 
   const features = [
     {
@@ -129,22 +133,26 @@ async function AuthenticatedHome() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Button
-              size="lg"
-              className="group bg-amber-500 hover:bg-amber-600 dark:bg-amber-400 dark:hover:bg-amber-500 text-white dark:text-gray-900 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Start Coding Now
-              <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            <Link href="/problem">
+              <Button
+                size="lg"
+                className="group bg-amber-500 hover:bg-amber-600 dark:bg-amber-400 dark:hover:bg-amber-500 text-white dark:text-gray-900 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Start Coding Now
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
 
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950"
-            >
-              Browse Problems
-            </Button>
+            <Link href="/problem">
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 cursor-pointer"
+              >
+                Browse Problems
+              </Button>
+            </Link>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
@@ -189,11 +197,10 @@ async function AuthenticatedHome() {
               >
                 <CardHeader>
                   <div
-                    className={`w-12 h-12 ${
-                      index % 2 === 0
-                        ? "bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400"
-                        : "bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400"
-                    } rounded-xl flex items-center justify-center mb-4`}
+                    className={`w-12 h-12 ${index % 2 === 0
+                      ? "bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-400"
+                      : "bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400"
+                      } rounded-xl flex items-center justify-center mb-4`}
                   >
                     {feature.icon}
                   </div>
@@ -229,44 +236,42 @@ async function AuthenticatedHome() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {problemCategories.map((category) => (
-              <Card
-                key={category.level}
-                className={`border-2 hover:shadow-lg transition-all duration-200 ${
-                  category.color === "amber"
+              <Link href="/problem" key={category.level} className="cursor-pointer">
+                <Card
+                  className={`border-2 hover:shadow-lg transition-all duration-200 h-full ${category.color === "amber"
                     ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700"
                     : "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800 hover:border-indigo-300 dark:hover:border-indigo-700"
-                }`}
-              >
-                <CardHeader>
-                  <Badge
-                    variant="secondary"
-                    className={`w-fit ${
-                      category.color === "amber"
+                    }`}
+                >
+                  <CardHeader>
+                    <Badge
+                      variant="secondary"
+                      className={`w-fit ${category.color === "amber"
                         ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300"
                         : "bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300"
-                    }`}
-                  >
-                    {category.level}
-                  </Badge>
-                  <CardTitle className="text-gray-900 dark:text-white">
-                    {category.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <CardDescription className="text-gray-600 dark:text-gray-300">
-                    {category.description}
-                  </CardDescription>
-                  <div
-                    className={`font-semibold ${
-                      category.color === "amber"
+                        }`}
+                    >
+                      {category.level}
+                    </Badge>
+                    <CardTitle className="text-gray-900 dark:text-white">
+                      {category.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <CardDescription className="text-gray-600 dark:text-gray-300">
+                      {category.description}
+                    </CardDescription>
+                    <div
+                      className={`font-semibold ${category.color === "amber"
                         ? "text-amber-600 dark:text-amber-400"
                         : "text-indigo-600 dark:text-indigo-400"
-                    }`}
-                  >
-                    {category.count}
-                  </div>
-                </CardContent>
-              </Card>
+                        }`}
+                    >
+                      {category.count}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>
@@ -282,12 +287,14 @@ async function AuthenticatedHome() {
             Join thousands of developers who are improving their skills every
             day.
           </p>
-          <Button
-            size="lg"
-            className="bg-white text-gray-900 hover:bg-gray-100 shadow-lg"
-          >
-            Get Started for Free
-          </Button>
+          <Link href="/problem">
+            <Button
+              size="lg"
+              className="bg-white text-gray-900 hover:bg-gray-100 shadow-lg cursor-pointer"
+            >
+              Get Started for Free
+            </Button>
+          </Link>
         </div>
       </section>
     </div>
@@ -296,8 +303,11 @@ async function AuthenticatedHome() {
 
 export default function Home() {
   return (
-    <Suspense fallback={null}>
-      <AuthenticatedHome />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <UserOnboarding />
+      </Suspense>
+      <HomeContent />
+    </>
   );
 }

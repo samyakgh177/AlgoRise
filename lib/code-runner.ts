@@ -74,6 +74,50 @@ function sanitizeCode(language: string, code: string): string {
 }
 
 /**
+ * Automatically merges the input/output driver harness from codeSnippets if the solutionCode
+ * is only a raw function definition without I/O handling (e.g. readline, Scanner, sys.stdin).
+ */
+export function attachDriverHarnessIfMissing(
+  language: string,
+  solutionCode: string,
+  snippetCode?: string
+): string {
+  if (!snippetCode || !solutionCode) return solutionCode;
+  const normalized = normalizeLanguage(language);
+
+  if (normalized === "JAVASCRIPT" || normalized === "TYPESCRIPT") {
+    const hasDriver = /readline|process\.stdin|readFileSync|prompt\(/i.test(solutionCode);
+    if (!hasDriver) {
+      const driverMatch = snippetCode.match(/(\/\/\s*(?:Parse input|Add readline|Input parsing)[\s\S]*|const\s+readline\s*=[\s\S]*|const\s+fs\s*=[\s\S]*)/i);
+      if (driverMatch && driverMatch[0]) {
+        return `${solutionCode.trim()}\n\n${driverMatch[0].trim()}`;
+      }
+    }
+  } else if (normalized === "PYTHON") {
+    const hasDriver = /sys\.stdin|input\(|if\s+__name__\s*==/i.test(solutionCode);
+    if (!hasDriver) {
+      const driverMatch = snippetCode.match(/(\/\/\s*(?:Parse input|Input parsing)[\s\S]*|#\s*(?:Input parsing|Parse input)[\s\S]*|if\s+__name__\s*==\s*["']__main__["'][\s\S]*|import\s+sys[\s\S]*)/i);
+      if (driverMatch && driverMatch[0]) {
+        return `${solutionCode.trim()}\n\n${driverMatch[0].trim()}`;
+      }
+    }
+  } else if (normalized === "JAVA") {
+    const hasMain = /public\s+static\s+void\s+main/i.test(solutionCode);
+    if (!hasMain) {
+      const mainMatch = snippetCode.match(/(public\s+static\s+void\s+main\s*\([^)]*\)\s*\{[\s\S]*?\n\s*\})/);
+      if (mainMatch && mainMatch[0]) {
+        const lastBraceIdx = solutionCode.lastIndexOf("}");
+        if (lastBraceIdx !== -1) {
+          return `${solutionCode.slice(0, lastBraceIdx)}\n  ${mainMatch[0]}\n}`;
+        }
+      }
+    }
+  }
+
+  return solutionCode;
+}
+
+/**
  * Execute a single test case using the Wandbox free API.
  */
 async function runWithWandbox(
@@ -184,7 +228,7 @@ export async function executeTestCases(
         : await runWithWandbox(normalized, sourceCode, tc.stdin);
 
       const expected = (tc.expectedOutput || "").trim();
-      const stdout = raw.stdout || null;
+      const stdout = raw.stdout !== undefined && raw.stdout !== null ? raw.stdout : "";
 
       let status = "Accepted";
       let passed = false;
@@ -193,7 +237,7 @@ export async function executeTestCases(
         status = "Compilation Error";
       } else if (raw.stderr && raw.exitCode !== 0) {
         status = "Runtime Error";
-      } else if (stdout === expected) {
+      } else if (stdout.trim() === expected) {
         status = "Accepted";
         passed = true;
       } else {
@@ -203,7 +247,7 @@ export async function executeTestCases(
       results.push({
         testCase: index + 1,
         passed,
-        stdout,
+        stdout: stdout || null,
         expected,
         stderr: raw.stderr || null,
         compile_output: raw.compileOutput || null,

@@ -19,7 +19,7 @@ export const Navbar = ({ userRole }: any) => {
 
 					<div className="flex flex-row items-center justify-center gap-x-4">
 						<Link
-							href="/problems"
+							href="/problem"
 							className="text-sm font-medium text-zinc-600 dark:text-zinc-400  hover:text-amber-600 cursor-pointer dark:hover:text-amber-400"
 						>
 							Problems

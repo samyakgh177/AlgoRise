@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { UserRole } from "@/lib/generated/prisma/enums";
-import { executeTestCases } from "@/lib/code-runner";
+import { executeTestCases, attachDriverHarnessIfMissing } from "@/lib/code-runner";
 import { currentUserRole, getCurrentUserData } from "@/modules/auth/actions";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -51,15 +51,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const verifiedSolutions: Record<string, string> = {};
+
     for (const [language, solutionCode] of Object.entries(referenceSolutions)) {
       const formattedTestCases = testCases.map(({ input, output }) => ({
         stdin: input,
         expectedOutput: output,
       }));
 
-      const { allPassed, results } = await executeTestCases(
+      const effectiveSolution = attachDriverHarnessIfMissing(
         language,
         solutionCode as string,
+        codeSnippets?.[language],
+      );
+      verifiedSolutions[language] = effectiveSolution;
+
+      const { allPassed, results } = await executeTestCases(
+        language,
+        effectiveSolution,
         formattedTestCases,
       );
 
@@ -92,7 +101,7 @@ export async function POST(request: NextRequest) {
         constraints,
         testCases,
         codeSnippets,
-        referenceSolutions,
+        referenceSolutions: verifiedSolutions,
         //   @ts-ignore
         userId: user.id,
       },
