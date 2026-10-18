@@ -2,7 +2,17 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle } from "lucide-react";
 
-export const TestCaseTable = ({ testCases }:any) => {
+interface TestCaseTableProps {
+  testCases?: any[];
+}
+
+export const TestCaseTable = ({ testCases = [] }: TestCaseTableProps) => {
+  const cases = testCases ?? [];
+
+  if (cases.length === 0) {
+    return null;
+  }
+
   return (
     <div className="w-full rounded-lg border">
       <Table>
@@ -18,8 +28,8 @@ export const TestCaseTable = ({ testCases }:any) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {testCases.map((testCase, index) => (
-            <TableRow key={testCase.id}>
+          {cases.map((testCase: any, index: number) => (
+            <TableRow key={testCase.id || index}>
               <TableCell className="font-medium">Test {index + 1}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
@@ -36,13 +46,13 @@ export const TestCaseTable = ({ testCases }:any) => {
                   )}
                 </div>
               </TableCell>
-              <TableCell>{testCase.memory}</TableCell>
-              <TableCell>{testCase.time}</TableCell>
+              <TableCell>{testCase.memory || "N/A"}</TableCell>
+              <TableCell>{testCase.time || "N/A"}</TableCell>
               <TableCell className="max-w-[200px] truncate font-mono text-sm">
-                {testCase.stdout}
+                {testCase.stdout ?? "None"}
               </TableCell>
               <TableCell className="max-w-[200px] truncate font-mono text-sm">
-                {testCase.expected}
+                {testCase.expected ?? "None"}
               </TableCell>
             </TableRow>
           ))}

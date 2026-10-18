@@ -65,44 +65,61 @@ export const onBoardUser = async () => {
   }
 };
 
-export const currentUserRole = async() =>{
-  try{
+export const currentUserRole = async () => {
+  try {
     const user = await currentUser();
-    if(!user){
-      return {success:false,error: "No authenticated user found"}
+    if (!user) {
+      return null;
     }
 
-    const {id} = user;
+    const { id } = user;
     const userRole = await prisma.user.findUnique({
-      where:{
-        clerkId:id
-      },select:{
-        role:true
-      }
-    })
-    return userRole?.role
-  }catch(error){
-    console.error("Error onboarding user:", error);
-
-    return {
-      success: false,
-      error: "Failed to onboard user",
-    };
+      where: {
+        clerkId: id,
+      },
+      select: {
+        role: true,
+      },
+    });
+    return userRole?.role ?? null;
+  } catch (error) {
+    console.error("Error fetching user role:", error);
+    return null;
   }
-}
+};
 
-
-export const getCurrentUserData = async()=>{
-  try{
+export const getCurrentUserData = async () => {
+  try {
     const user = await currentUser();
-    if(!user){
-      return {success:false,error: "No authenticated user found"}
+    if (!user) {
+      return null;
     }
     const data = await prisma.user.findUnique({
-      where:{
-        clerkId:user.id
-      } 
-    })
+      where: {
+        clerkId: user.id,
+      },
+      include: {
+        submissions: {
+          orderBy: { createdAt: "desc" },
+        },
+        solvedProblems: {
+          orderBy: { createdAt: "desc" },
+        },
+        playlists: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            problems: {
+              include: {
+                problem: true,
+              },
+            },
+          },
+        },
+      },
+    });
     return data;
-  }catch(error){}
-}
+  } catch (error) {
+    console.error("Error fetching current user data:", error);
+    return null;
+  }
+};

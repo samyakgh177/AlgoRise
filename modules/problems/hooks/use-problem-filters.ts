@@ -1,18 +1,17 @@
 import { useState , useMemo } from "react";
 
-export function useProblemFilters(problems=[]){
-    console.log("useProblemFilters called with problems:", problems);
-      const [search, setSearch] = useState("");
+export function useProblemFilters(problems: any[] = []) {
+  const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("ALL");
   const [selectedTag, setSelectedTag] = useState("ALL");
 
-//   Extract all unique tags from the problems
-const allTags = useMemo(()=>{
-    const tagsSet = new Set();
-    problems.forEach((p)=>p.tags?.forEach((t)=>tagsSet.add(t)));
+  // Extract all unique tags from the problems
+  const allTags = useMemo(() => {
+    const tagsSet = new Set<string>();
+    problems.forEach((p: any) => p?.tags?.forEach((t: string) => tagsSet.add(t)));
 
-    return Array.from(tagsSet)
-},[problems]);
+    return Array.from(tagsSet);
+  }, [problems]);
 
  const filteredProblems = useMemo(() => {
     return problems

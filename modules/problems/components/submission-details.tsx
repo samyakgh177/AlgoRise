@@ -2,17 +2,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Clock, CpuIcon, Code, CheckCircle2, XCircle } from "lucide-react";
 
-export const SubmissionDetails = ({ submission }:any) => {
+interface SubmissionDetailsProps {
+  submission: any;
+}
+
+export const SubmissionDetails = ({ submission }: SubmissionDetailsProps) => {
   const isSuccess = submission.status === "Accepted";
-  const averageMemory = submission.memory ? 
-    JSON.parse(submission.memory).reduce((a, b) => parseFloat(a) + parseFloat(b), 0) / 
-    JSON.parse(submission.memory).length : 0;
-    
-  const averageTime = submission.time ? 
-    JSON.parse(submission.time)
-      .map(t => parseFloat(t.replace(" s", "")))
-      .reduce((a, b) => a + b, 0) / 
-    JSON.parse(submission.time).length : 0;
+
+  const averageMemory = (() => {
+    if (!submission.memory) return 0;
+    try {
+      const arr = JSON.parse(submission.memory);
+      if (!Array.isArray(arr) || arr.length === 0) return 0;
+      return arr.reduce((a: any, b: any) => parseFloat(a) + parseFloat(b), 0) / arr.length;
+    } catch {
+      return 0;
+    }
+  })();
+
+  const averageTime = (() => {
+    if (!submission.time) return 0;
+    try {
+      const arr = JSON.parse(submission.time);
+      if (!Array.isArray(arr) || arr.length === 0) return 0;
+      return (
+        arr
+          .map((t: string) => parseFloat(String(t).replace(" s", "")))
+          .reduce((a: number, b: number) => a + b, 0) / arr.length
+      );
+    } catch {
+      return 0;
+    }
+  })();
 
   return (
     <Card className="w-full">

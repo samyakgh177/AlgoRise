@@ -1,16 +1,18 @@
+import { Suspense } from "react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { UserRole } from "@/lib/generated/prisma/enums"
 import { getCurrentUserData } from "@/modules/auth/actions"
 import { CreateProblemForm } from "@/modules/problems/components/create-problem-form"
 import { ArrowLeft } from "lucide-react"
-import { redirect } from "next/dist/server/api-utils"
+import { redirect } from "next/navigation"
 import Link from "next/link"
+import { Spinner } from "@/components/ui/spinner"
 
-const CreateProblemPage = async()=>{
+const CreateProblemContent = async () => {
     const user = await getCurrentUserData()
     //@ts-ignore
-    if(user?.role !== UserRole.ADMIN){
+    if (user?.role !== UserRole.ADMIN) {
         redirect("/")
     }
     return (
@@ -26,6 +28,18 @@ const CreateProblemPage = async()=>{
             </div>   
             <CreateProblemForm/>
         </section>
+    )
+}
+
+const CreateProblemPage = () => {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <Spinner />
+            </div>
+        }>
+            <CreateProblemContent />
+        </Suspense>
     )
 }
 

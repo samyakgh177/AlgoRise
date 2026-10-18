@@ -1,7 +1,6 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { connection } from "next/server";
-import { redirect } from "next/navigation";
 import { onBoardUser } from "@/modules/auth/actions";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,7 @@ async function AuthenticatedHome() {
 
   const { userId } = await auth();
 
-  if (!userId) {
+  if (userId) {
     await onBoardUser();
   }
 

@@ -3,8 +3,14 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle2, XCircle, Clock, Cpu, Code, Calendar } from "lucide-react";
 
-export const SubmissionHistory = ({ submissions = [] }) => {
-  if (!submissions.length) {
+interface SubmissionHistoryProps {
+  submissions?: any[];
+}
+
+export const SubmissionHistory = ({ submissions = [] }: SubmissionHistoryProps) => {
+  const subs = submissions ?? [];
+
+  if (!subs.length) {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -15,37 +21,43 @@ export const SubmissionHistory = ({ submissions = [] }) => {
     );
   }
 
-  const formatMemory = (memory) => {
-    if (!memory) return 'N/A';
+  const formatMemory = (memory?: string | null) => {
+    if (!memory) return "N/A";
     try {
       const memoryArray = JSON.parse(memory);
-      const avgMemory = memoryArray.reduce((a, b) => parseFloat(a) + parseFloat(b), 0) / memoryArray.length;
+      if (!Array.isArray(memoryArray) || memoryArray.length === 0) return "N/A";
+      const avgMemory =
+        memoryArray.reduce((a: any, b: any) => parseFloat(a) + parseFloat(b), 0) /
+        memoryArray.length;
       return `${avgMemory.toFixed(2)} KB`;
     } catch {
-      return 'N/A';
+      return "N/A";
     }
   };
 
-  const formatTime = (time) => {
-    if (!time) return 'N/A';
+  const formatTime = (time?: string | null) => {
+    if (!time) return "N/A";
     try {
       const timeArray = JSON.parse(time);
-      const avgTime = timeArray
-        .map(t => parseFloat(t.replace(" s", "")))
-        .reduce((a, b) => a + b, 0) / timeArray.length;
+      if (!Array.isArray(timeArray) || timeArray.length === 0) return "N/A";
+      const avgTime =
+        timeArray
+          .map((t: string) => parseFloat(String(t).replace(" s", "")))
+          .reduce((a: number, b: number) => a + b, 0) / timeArray.length;
       return `${avgTime.toFixed(3)} s`;
     } catch {
-      return 'N/A';
+      return "N/A";
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const formatDate = (dateString?: Date | string | null) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -58,7 +70,7 @@ export const SubmissionHistory = ({ submissions = [] }) => {
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-3">
-            {submissions.map((submission) => (
+            {subs.map((submission) => (
               <Card key={submission.id} className="bg-muted/50">
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-center justify-between mb-3">

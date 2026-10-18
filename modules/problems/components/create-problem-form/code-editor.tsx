@@ -17,7 +17,7 @@ export function CodeEditor({ value, onChange, language = "javascript" }: any) {
       <div className="h-75 w-full">
         <Editor
           height={"300px"}
-          defaultLanguage={LANGUAGE_MAP[language]}
+          defaultLanguage={LANGUAGE_MAP[language.toLowerCase() as keyof typeof LANGUAGE_MAP] || "javascript"}
           theme="vs-dark"
           value={value}
           onChange={onChange}

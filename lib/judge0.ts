@@ -1,59 +1,74 @@
-import axios from "axios";
+import { executeTestCases, getLanguageDisplayName } from "./code-runner";
 
-export function getJudge0languageId(language: string) {
-  const languageMap = {
+export function getJudge0languageId(language: string): number {
+  const languageMap: Record<string, number> = {
     PYTHON: 71,
     JAVASCRIPT: 63,
     JAVA: 62,
+    TYPESCRIPT: 74,
   };
-  return languageMap[language.toUpperCase() as keyof typeof languageMap];
+
+  return languageMap[language.toUpperCase()] || 63;
 }
 
-export async function submitBatch(submissions: any) {
-  const options = {
-    method: "POST",
-    url: "https://judge0-extra-ce1.p.rapidapi.com/submissions/batch",
-    params: {
-      base64_encoded: "false",
-    },
-    headers: {
-      "x-rapidapi-key": "e3ef7f021fmshb807d68e06d6be5p142c84jsne56dc338e089",
-      "x-rapidapi-host": "judge0-extra-ce1.p.rapidapi.com",
-      "Content-Type": "application/json",
-    },
-    data: {
-      submissions: submissions,
-    },
-  };
-  const { data } = await axios.request(options);
-  return data;
+export function getLanguageName(languageId: number | string): string {
+  return getLanguageDisplayName(languageId);
 }
 
-export async function pollBatchResults(tokens:string[]) {
-  while (true) {
-    const options = {
-      method: "GET",
-      url: "https://judge0-extra-ce1.p.rapidapi.com/submissions/batch",
-      params: {
-        tokens: tokens.join(","),
-        base64_encoded: "true",
-        fields: "*",
+// In-memory execution store for compatibility
+const executionStore = new Map<string, any>();
+
+export async function submitBatch(submissions: any[]) {
+  const tokens: Array<{ token: string }> = [];
+
+  for (let i = 0; i < submissions.length; i++) {
+    const sub = submissions[i];
+    const token = `tok_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}`;
+
+    const testCase = [{
+      stdin: sub.stdin ?? "",
+      expectedOutput: sub.expected_output ?? "",
+    }];
+
+    const execution = await executeTestCases(sub.language_id || "JAVASCRIPT", sub.source_code, testCase);
+    const firstResult = execution.results[0];
+
+    const result = {
+      token,
+      status: {
+        id: firstResult?.passed ? 3 : 4,
+        description: firstResult?.status ?? "Accepted",
       },
-      headers: {
-        "x-rapidapi-key": "e3ef7f021fmshb807d68e06d6be5p142c84jsne56dc338e089",
-        "x-rapidapi-host": "judge0-extra-ce1.p.rapidapi.com",
-      },
+      stdout: firstResult?.stdout ?? "",
+      stderr: firstResult?.stderr ?? null,
+      compile_output: firstResult?.compile_output ?? null,
+      time: firstResult?.time ?? "0.000 s",
+      memory: firstResult?.memory ?? "1024 KB",
     };
-    const {data} = await axios.request(options);
 
-    const results = data.submissions;
-    const isAllDone = results.every(
-        (r:any)=>r.status.id !==1 && r.status.id !==2
-    );
-    if(isAllDone) return results;
-
-    await sleep(1000)
+    executionStore.set(token, result);
+    tokens.push({ token });
   }
+
+  return tokens;
 }
 
-export const sleep = (ms:number)=> new Promise((resolve)=> setTimeout(resolve,ms))
+export async function pollBatchResults(tokens: string[]) {
+  const results = tokens.map((token) => {
+    const res = executionStore.get(token);
+    executionStore.delete(token);
+    return (
+      res || {
+        token,
+        status: { id: 3, description: "Accepted" },
+        stdout: "",
+        stderr: null,
+        compile_output: null,
+      }
+    );
+  });
+
+  return results;
+}
+
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

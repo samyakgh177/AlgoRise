@@ -8,3 +8,13 @@ services:
       POSTGRES_PASSWORD: postgres123
     ports:
       - "5432:5432"
+
+  # Optional: Local Piston code execution engine for unlimited offline / private runs
+  # To use: run `docker compose up -d algorise-piston` and set PISTON_URL=http://localhost:2000/api/v2 in .env
+  algorise-piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: algorise_piston
+    restart: always
+    ports:
+      - "2000:2000"
+    privileged: true

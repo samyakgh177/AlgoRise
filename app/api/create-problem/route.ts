@@ -1,10 +1,6 @@
 import { prisma } from "@/lib/db";
 import { UserRole } from "@/lib/generated/prisma/enums";
-import {
-  getJudge0languageId,
-  pollBatchResults,
-  submitBatch,
-} from "@/lib/judge0";
+import { executeTestCases } from "@/lib/code-runner";
 import { currentUserRole, getCurrentUserData } from "@/modules/auth/actions";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -14,8 +10,8 @@ export async function POST(request: NextRequest) {
     const userRole = await currentUserRole();
     const user = await getCurrentUserData();
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" });
+    if (!user || !user.id) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
     }
 
     if (userRole !== UserRole.ADMIN) {
@@ -56,45 +52,33 @@ export async function POST(request: NextRequest) {
     }
 
     for (const [language, solutionCode] of Object.entries(referenceSolutions)) {
-      // 1.get judge0 language id for current lang
-      const languageId = getJudge0languageId(language);
-
-      // 2. prepare judge0 submissions for all test cases
-
-      const submissions = testCases.map(({ input, output }) => ({
-        source_code: solutionCode,
-        language_id: languageId,
+      const formattedTestCases = testCases.map(({ input, output }) => ({
         stdin: input,
-        expected_output: output,
+        expectedOutput: output,
       }));
-      // 3. Submit all testcases in one batch
 
-      const submissionResults = await submitBatch(submissions);
-      // 4. Extract tokens from response
-      const tokens = submissionResults.map((res: any) => res.token);
+      const { allPassed, results } = await executeTestCases(
+        language,
+        solutionCode as string,
+        formattedTestCases,
+      );
 
-      // 5. Poll judge0 until all submissions are done
-      const results = await pollBatchResults(tokens);
-      // 6. validate that each test cases
-
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-
-        if (result.status.id !== 3) {
-          return NextResponse.json(
-            {
-              error: `Validation failed for ${language}`,
-              testCase: {
-                input: submissions[i].stdin,
-                expectedOutput: submissions[i].expected_output,
-                actualOutput: result.stdout,
-                error: result.stderr || result.compile_output,
-              },
-              details: result,
+      if (!allPassed) {
+        const failedTestCase = results.find((r) => !r.passed) || results[0];
+        const failedIndex = (failedTestCase?.testCase ?? 1) - 1;
+        return NextResponse.json(
+          {
+            error: `Validation failed for ${language}`,
+            testCase: {
+              input: formattedTestCases[failedIndex]?.stdin,
+              expectedOutput: formattedTestCases[failedIndex]?.expectedOutput,
+              actualOutput: failedTestCase?.stdout,
+              error: failedTestCase?.stderr || failedTestCase?.compile_output,
             },
-            { status: 400 },
-          );
-        }
+            details: failedTestCase,
+          },
+          { status: 400 },
+        );
       }
     }
 

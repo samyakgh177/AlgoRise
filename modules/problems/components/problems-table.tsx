@@ -7,7 +7,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
 import { ProblemsHeader } from "./problems-header";
 import { useProblemFilters } from "../hooks/use-problem-filters";
 import { ProblemsFilters } from "./problem-filters";
@@ -57,7 +56,7 @@ const ProblemsTable = ({problems=[] , user}:any) => {
             </TableHeader>
             <TableBody>
               {pagination.paginatedItems.length > 0 ? (
-                pagination.paginatedItems.map((problem) => (
+                pagination.paginatedItems.map((problem: any) => (
                   <ProblemRow
                     key={problem.id}
                     problem={problem}

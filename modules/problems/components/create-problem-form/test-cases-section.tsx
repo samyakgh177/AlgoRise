@@ -6,7 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export function TestCasesSection({ form, testCasesArray }) {
+export function TestCasesSection({
+  form,
+  testCasesArray,
+}: {
+  form: any;
+  testCasesArray: any;
+}) {
   const {
     register,
     formState: { errors },
@@ -33,7 +39,7 @@ export function TestCasesSection({ form, testCasesArray }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {fields.map((field, index) => (
+        {fields.map((field: any, index: number) => (
           <TestCaseCard
             key={field.id}
             index={index}
@@ -43,7 +49,7 @@ export function TestCasesSection({ form, testCasesArray }) {
             canRemove={fields.length > 1}
           />
         ))}
-        {errors.testCases && !Array.isArray(errors.testCases) && (
+        {errors?.testCases && !Array.isArray(errors.testCases) && (
           <p className="text-sm text-red-500">{errors.testCases.message}</p>
         )}
       </CardContent>
@@ -51,7 +57,19 @@ export function TestCasesSection({ form, testCasesArray }) {
   );
 }
 
-function TestCaseCard({ index, register, errors, onRemove, canRemove }) {
+function TestCaseCard({
+  index,
+  register,
+  errors,
+  onRemove,
+  canRemove,
+}: {
+  index: number;
+  register: any;
+  errors: any;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
   return (
     <Card className="bg-background">
       <CardHeader className="pb-4">
@@ -78,7 +96,7 @@ function TestCaseCard({ index, register, errors, onRemove, canRemove }) {
               placeholder="Enter test case input"
               className="mt-2 min-h-24 resize-y font-mono"
             />
-            {errors.testCases?.[index]?.input && (
+            {errors?.testCases?.[index]?.input && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.testCases[index].input.message}
               </p>
@@ -91,7 +109,7 @@ function TestCaseCard({ index, register, errors, onRemove, canRemove }) {
               placeholder="Enter expected output"
               className="mt-2 min-h-24 resize-y font-mono"
             />
-            {errors.testCases?.[index]?.output && (
+            {errors?.testCases?.[index]?.output && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.testCases[index].output.message}
               </p>

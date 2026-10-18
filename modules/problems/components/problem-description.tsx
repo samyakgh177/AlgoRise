@@ -21,12 +21,10 @@ export function ProblemDescription({ problem }: any) {
           <p className="text-foreground leading-relaxed">
             {problem?.description}
           </p>
-          {
-            Object.values(problem?.examples).map((example:any , index:number)=>(
-
-              <ExampleSection example={example} index={index}/>
-            ))
-          }
+          {problem?.examples &&
+            Object.values(problem.examples).map((example: any, index: number) => (
+              <ExampleSection key={index} example={example} index={index} />
+            ))}
           <ConstraintsSection constraints={problem?.constraints}/>
         </div>
       </CardContent>

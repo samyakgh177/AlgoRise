@@ -9,8 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LANGUAGES } from "../../schema";
 import { CodeEditor } from "./code-editor";
 
-
-export function LanguageSections({ form }) {
+export function LanguageSections({ form }: { form: any }) {
   return (
     <>
       {LANGUAGES.map((language) => (
@@ -20,7 +19,7 @@ export function LanguageSections({ form }) {
   );
 }
 
-function LanguageCard({ language, form }) {
+function LanguageCard({ language, form }: { language: string; form: any }) {
   const {
     control,
     register,
@@ -39,12 +38,12 @@ function LanguageCard({ language, form }) {
         <StarterCodeEditor
           language={language}
           control={control}
-          error={errors.codeSnippets?.[language]}
+          error={errors?.codeSnippets?.[language]}
         />
         <ReferenceSolutionEditor
           language={language}
           control={control}
-          error={errors.referenceSolutions?.[language]}
+          error={errors?.referenceSolutions?.[language]}
         />
         <ExampleFields
           language={language}
@@ -56,7 +55,15 @@ function LanguageCard({ language, form }) {
   );
 }
 
-function StarterCodeEditor({ language, control, error }) {
+function StarterCodeEditor({
+  language,
+  control,
+  error,
+}: {
+  language: string;
+  control: any;
+  error?: any;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -82,7 +89,15 @@ function StarterCodeEditor({ language, control, error }) {
   );
 }
 
-function ReferenceSolutionEditor({ language, control, error }) {
+function ReferenceSolutionEditor({
+  language,
+  control,
+  error,
+}: {
+  language: string;
+  control: any;
+  error?: any;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -111,7 +126,15 @@ function ReferenceSolutionEditor({ language, control, error }) {
   );
 }
 
-function ExampleFields({ language, register, errors }) {
+function ExampleFields({
+  language,
+  register,
+  errors,
+}: {
+  language: string;
+  register: any;
+  errors: any;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -126,7 +149,7 @@ function ExampleFields({ language, register, errors }) {
               placeholder="Example input"
               className="mt-2 min-h-20 resize-y font-mono"
             />
-            {errors.examples?.[language]?.input && (
+            {errors?.examples?.[language]?.input && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.examples[language].input.message}
               </p>
@@ -139,7 +162,7 @@ function ExampleFields({ language, register, errors }) {
               placeholder="Example output"
               className="mt-2 min-h-20 resize-y font-mono"
             />
-            {errors.examples?.[language]?.output && (
+            {errors?.examples?.[language]?.output && (
               <p className="text-sm text-red-500 mt-1">
                 {errors.examples[language].output.message}
               </p>

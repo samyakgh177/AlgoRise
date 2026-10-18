@@ -43,13 +43,15 @@ export function useCreateProblem() {
       const data = await response.json();
 
       console.log(data);
-      if (data.success) {
+      if (data.success || data.id) {
         toast.success("Problem created successfully");
-        router.push("/problems");
+        router.push("/problem");
+      } else {
+        toast.error(data.error || "Failed to create problem");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating problem:", error);
-      toast.error(error.message || "Failed to create problem");
+      toast.error(error?.message || "Failed to create problem");
     } finally {
       setIsLoading(false);
     }
